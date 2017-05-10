@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Modified by Antoine <antoine@van-elstraete.net> to use fancybox
+# instead of lightbox.
+
 # Copyright (c) 2016 Kura
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +23,6 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from uuid import uuid4
 
 from docutils import nodes
 from docutils.parsers.rst import directives, Directive
@@ -38,21 +40,17 @@ class Lightbox(Directive):
     Usage:
 
         .. lightbox::
-            :thumb: /images/test-thumb.png
-            :large: /images/test.png
+            :img: test.png
             :alt: This is a test image
             :caption: A test caption
-            :align: center
     """
 
     required_arguments = 0
     optional_arguments = 3
     option_spec = {
-        'thumb': str,
-        'large': str,
+        'img': str,
         'alt': str,
         'caption': str,
-        'align': align
     }
 
     final_argument_whitespace = False
@@ -60,14 +58,9 @@ class Lightbox(Directive):
 
     def run(self):
         """Run the directive."""
-        if 'thumb' not in self.options:
-            raise self.error('Thumb argument is required.')
-        thumb = self.options['thumb']
-        if 'large' not in self.options:
-            raise self.error('Large argument is required.')
-        large = self.options['large']
-
-        uuid = str(uuid4())
+        if 'img' not in self.options:
+            raise self.error('Image argument is required.')
+        img = self.options['img']
         caption = None
         alt = None
 
@@ -76,33 +69,22 @@ class Lightbox(Directive):
 
         if 'caption' in self.options:
             caption = self.options['caption']
-
-        if 'align' in self.options:
-            align = self.options['align']
         else:
-            align = 'left'
+            caption = img.split('/')[-1]
 
         if alt is not None:
-            alt_text = '{} (click to view large image)'.format(alt)
+            alt_text = '{} (cliquer pour voir en grand)'.format(alt)
         else:
-            alt_text = '(click to view large image)'
+            alt_text = '(cliquer pour voir en grand)'
 
-        if caption is not None:
-            caption_block = ('''<p class="align-{}">{} (click to view large '''
-                             '''image)</p>''').format(align, caption)
-        else:
-            caption_block = ('''<p class="align-{}">(click to view large '''
-                             '''image)</p>''').format(align)
-
-        block = ('''<div class="lightbox-block align-{4}">'''
-                 '''<a href="#{0}" title="{3}">'''
-                 '''<img src="{1}" alt="{3}" class="align-{4}" /></a>'''
-                 '''<a href="#_" class="lightbox" id="{0}" title="Click to '''
-                 '''close">'''
-                 '''<img alt="Click to close" src="{2}" /></a>{5}</div>'''
-                 '''<div class="lightbox-divider">'''
-                 '''</div>''').format(uuid, thumb, large, alt_text, align,
-                                      caption_block)
+        img_id = img.replace('/', '-')
+        block = ('''<div>'''
+                 '''<a data-fancybox '''
+                 '''data-caption="{3}" '''
+                 '''href="/images/{0}">'''
+                 '''<img src="/images_th/article/{0}" alt="{2}" '''
+                 '''class="article-image" /></a>'''
+                 '''</div>\n''').format(img, img_id, alt_text, caption)
         return [nodes.raw('', block, format='html'), ]
 
 
